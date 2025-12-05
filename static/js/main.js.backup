@@ -1,0 +1,388 @@
+// Global variables
+let sessionId = null;
+let dataType = null;
+let selectedModel = null;
+let dataColumns = [];
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    initializeUpload();
+});
+
+// File upload initialization
+function initializeUpload() {
+    const uploadArea = document.getElementById('upload-area');
+    const fileInput = document.getElementById('file-input');
+
+    // Click to upload
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    // File input change
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            uploadFile(file);
+        }
+    });
+
+    // Drag and drop
+    uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadArea.classList.add('drag-over');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+        uploadArea.classList.remove('drag-over');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadArea.classList.remove('drag-over');
+        const file = e.dataTransfer.files[0];
+        if (file) {
+            uploadFile(file);
+        }
+    });
+}
+
+// Upload file to server
+async function uploadFile(file) {
+    showLoading();
+    
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await fetch('/upload_data', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+            sessionId = data.session_id;
+            dataType = data.data_type;
+            dataColumns = data.columns || [];
+            
+            displayDataPreview(data);
+            hideLoading();
+        } else {
+            showError(data.error || 'Error uploading file');
+            hideLoading();
+        }
+    } catch (error) {
+        showError('Network error: ' + error.message);
+        hideLoading();
+    }
+}
+
+// Display data preview
+function displayDataPreview(data) {
+    const previewDiv = document.getElementById('data-preview');
+    const contentDiv = document.getElementById('preview-content');
+    
+    let html = `
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle"></i> ${data.info}
+        </div>
+    `;
+
+    if (data.data_type === 'tabular') {
+        html += `
+            <div class="table-responsive">
+                ${data.sample_data}
+            </div>
+        `;
+    } else if (data.data_type === 'image') {
+        html += `
+            <div class="text-center">
+                <img src="${data.image_preview}" class="image-preview" alt="Uploaded image">
+                <p class="mt-3 text-muted">Image shape: ${data.shape.join(' × ')}</p>
+            </div>
+        `;
+    }
+
+    contentDiv.innerHTML = html;
+    previewDiv.classList.remove('d-none');
+}
+
+// Navigate to step
+function goToStep(stepNumber) {
+    // Hide all steps
+    document.querySelectorAll('.step-section').forEach(section => {
+        section.classList.remove('active');
+    });
+    
+    // Show selected step
+    document.getElementById(`step-${stepNumber}`).classList.add('active');
+    
+    // Update step indicators
+    document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
+        if (index + 1 <= stepNumber) {
+            indicator.classList.add('active');
+        } else {
+            indicator.classList.remove('active');
+        }
+    });
+
+    // Load models if going to step 2
+    if (stepNumber === 2 && sessionId) {
+        loadModels();
+    }
+
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Load available models
+async function loadModels() {
+    showLoading();
+
+    try {
+        const response = await fetch('/get_models', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ session_id: sessionId })
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+            displayModels(data.models);
+            
+            // Show column selection for tabular data
+            if (dataType === 'tabular') {
+                populateColumnSelectors();
+                document.getElementById('column-selection').classList.remove('d-none');
+            }
+            
+            hideLoading();
+        } else {
+            showError(data.error);
+            hideLoading();
+        }
+    } catch (error) {
+        showError('Error loading models: ' + error.message);
+        hideLoading();
+    }
+}
+
+// Display model cards
+function displayModels(models) {
+    const container = document.getElementById('model-selection');
+    
+    container.innerHTML = models.map(model => `
+        <div class="col-md-6 col-lg-3">
+            <div class="model-card" onclick="selectModel('${model.id}', this)">
+                <div class="model-icon">${model.icon}</div>
+                <h5>${model.name}</h5>
+                <p>${model.description}</p>
+                <span class="badge bg-info">${model.type}</span>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Select a model
+function selectModel(modelId, element) {
+    selectedModel = modelId;
+    
+    // Remove selection from all cards
+    document.querySelectorAll('.model-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // Add selection to clicked card
+    element.classList.add('selected');
+    
+    // Enable train button
+    document.getElementById('train-button').disabled = false;
+}
+
+// Populate column selectors for tabular data
+function populateColumnSelectors() {
+    const targetSelect = document.getElementById('target-column');
+    const featureSelect = document.getElementById('feature-columns');
+    
+    targetSelect.innerHTML = '<option value="">Select target column...</option>' +
+        dataColumns.map(col => `<option value="${col}">${col}</option>`).join('');
+    
+    featureSelect.innerHTML = dataColumns.map(col => 
+        `<option value="${col}">${col}</option>`
+    ).join('');
+}
+
+// Train the model
+async function trainModel() {
+    if (!selectedModel) {
+        showError('Please select a model first');
+        return;
+    }
+
+    const targetColumn = document.getElementById('target-column')?.value;
+    const featureColumns = Array.from(document.getElementById('feature-columns')?.selectedOptions || [])
+        .map(option => option.value);
+
+    if (dataType === 'tabular' && !targetColumn) {
+        showError('Please select a target column');
+        return;
+    }
+
+    // Go to training step
+    goToStep(3);
+
+    try {
+        const response = await fetch('/train_model', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                session_id: sessionId,
+                model_id: selectedModel,
+                target_column: targetColumn,
+                feature_columns: featureColumns.length > 0 ? featureColumns : null
+            })
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+            displayResults(data);
+            goToStep(4);
+        } else {
+            showError(data.error);
+            goToStep(2);
+        }
+    } catch (error) {
+        showError('Error training model: ' + error.message);
+        goToStep(2);
+    }
+}
+
+// Display training results
+function displayResults(data) {
+    const resultsDiv = document.getElementById('results-content');
+    
+    let html = `
+        <div class="alert alert-success">
+            <h5><i class="fas fa-check-circle"></i> ${data.message}</h5>
+        </div>
+        
+        <div class="row mb-4">
+    `;
+
+    // Display metrics
+    for (const [key, value] of Object.entries(data.metrics)) {
+        html += `
+            <div class="col-md-6">
+                <div class="results-metric">
+                    <p class="mb-2">${key}</p>
+                    <h4>${typeof value === 'number' ? value.toFixed(4) : value}</h4>
+                </div>
+            </div>
+        `;
+    }
+
+    html += `
+        </div>
+        
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-chart-bar"></i> Visualization</h5>
+                <img src="${data.plot}" class="img-fluid" alt="Model results">
+            </div>
+        </div>
+    `;
+
+    resultsDiv.innerHTML = html;
+
+    // Show layer visualization option for images
+    if (dataType === 'image') {
+        document.getElementById('layer-viz-section').classList.remove('d-none');
+    }
+}
+
+// Visualize hidden layers
+async function visualizeLayers() {
+    showLoading();
+
+    try {
+        const response = await fetch('/visualize_layers', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                session_id: sessionId
+            })
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+            const vizDiv = document.getElementById('layer-viz-content');
+            vizDiv.innerHTML = `
+                <div class="alert alert-info">
+                    <i class="fas fa-lightbulb"></i> ${data.message}
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Neural Network Vision</h5>
+                        <img src="${data.plot}" class="img-fluid" alt="Layer activations">
+                        <p class="mt-3 text-muted">
+                            Each image shows what different "neurons" in the first layer detect - 
+                            edges, colors, patterns, and textures!
+                        </p>
+                    </div>
+                </div>
+            `;
+            hideLoading();
+        } else {
+            showError(data.error);
+            hideLoading();
+        }
+    } catch (error) {
+        showError('Error visualizing layers: ' + error.message);
+        hideLoading();
+    }
+}
+
+// Start over
+function startOver() {
+    sessionId = null;
+    dataType = null;
+    selectedModel = null;
+    dataColumns = [];
+    
+    // Clear all content
+    document.getElementById('data-preview').classList.add('d-none');
+    document.getElementById('preview-content').innerHTML = '';
+    document.getElementById('model-selection').innerHTML = '';
+    document.getElementById('results-content').innerHTML = '';
+    document.getElementById('layer-viz-content').innerHTML = '';
+    document.getElementById('layer-viz-section').classList.add('d-none');
+    document.getElementById('column-selection').classList.add('d-none');
+    document.getElementById('file-input').value = '';
+    
+    // Go back to step 1
+    goToStep(1);
+}
+
+// Show loading overlay
+function showLoading() {
+    document.getElementById('loading-overlay').classList.remove('d-none');
+}
+
+// Hide loading overlay
+function hideLoading() {
+    document.getElementById('loading-overlay').classList.add('d-none');
+}
+
+// Show error message
+function showError(message) {
+    alert('Error: ' + message);
+}

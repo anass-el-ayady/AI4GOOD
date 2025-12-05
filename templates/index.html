@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratoire d'Apprentissage IA - Apprenez l'IA de manière amusante! 🚀</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-gradient">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-robot"></i> Laboratoire d'Apprentissage IA
+            </a>
+            <span class="navbar-text text-white">
+                Apprenez l'IA en pratiquant!
+            </span>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="container text-center">
+            <h1 class="display-4 fw-bold mb-3">🎓 Bienvenue au Laboratoire d'Apprentissage IA!</h1>
+            <p class="lead mb-4">Découvrez la magie de l'Intelligence Artificielle par la pratique</p>
+            <div class="step-indicators">
+                <div class="step-indicator active" id="step-1-indicator">
+                    <div class="step-number">1</div>
+                    <div class="step-label">Choisir Données</div>
+                </div>
+                <div class="step-arrow">→</div>
+                <div class="step-indicator" id="step-2-indicator">
+                    <div class="step-number">2</div>
+                    <div class="step-label">Sélectionner Modèle</div>
+                </div>
+                <div class="step-arrow">→</div>
+                <div class="step-indicator" id="step-3-indicator">
+                    <div class="step-number">3</div>
+                    <div class="step-label">Entraîner</div>
+                </div>
+                <div class="step-arrow">→</div>
+                <div class="step-indicator" id="step-4-indicator">
+                    <div class="step-number">4</div>
+                    <div class="step-label">Résultats</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container my-5">
+        <!-- Step 1: Choose Dataset -->
+        <div class="step-section active" id="step-1">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0"><i class="fas fa-database"></i> Étape 1: Choisir un Jeu de Données</h3>
+                </div>
+                <div class="card-body p-5">
+                    <p class="lead mb-4">Choisissez un jeu de données célèbre pour explorer l'IA!</p>
+                    
+                    <!-- Dataset Cards -->
+                    <div id="dataset-selection" class="row g-4">
+                        <!-- Datasets will be loaded here -->
+                    </div>
+                    
+                    <!-- Fun Learning Section -->
+                    <div id="learning-section" class="mt-5 d-none">
+                        <div class="card bg-gradient mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            <div class="card-body text-white">
+                                <h5 class="mb-3"><i class="fas fa-question-circle"></i> 🤔 Coin d'Apprentissage Rapide!</h5>
+                                <p class="mb-3">Cliquez sur n'importe quelle question ci-dessous pour apprendre les fondamentaux de l'IA de manière amusante:</p>
+                                <div class="row g-2">
+                                    <div class="col-md-6 col-lg-3">
+                                        <button class="btn btn-light w-100 question-btn" onclick="showAnswer('q1')">
+                                            <i class="fas fa-database"></i> Pourquoi des données?
+                                        </button>
+                                    </div>
+                                    <div class="col-md-6 col-lg-3">
+                                        <button class="btn btn-light w-100 question-btn" onclick="showAnswer('q2')">
+                                            <i class="fas fa-check-circle"></i> Bonnes données?
+                                        </button>
+                                    </div>
+                                    <div class="col-md-6 col-lg-3">
+                                        <button class="btn btn-light w-100 question-btn" onclick="showAnswer('q3')">
+                                            <i class="fas fa-cut"></i> Pourquoi diviser?
+                                        </button>
+                                    </div>
+                                    <div class="col-md-6 col-lg-3">
+                                        <button class="btn btn-light w-100 question-btn" onclick="showAnswer('q4')">
+                                            <i class="fas fa-brain"></i> Comment l'IA apprend?
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Answer Display -->
+                        <div id="answer-display" class="d-none">
+                            <div class="card border-primary mb-4">
+                                <div class="card-body">
+                                    <button class="btn-close float-end" onclick="closeAnswer()"></button>
+                                    <div id="answer-content">
+                                        <!-- Answer will be displayed here -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Dataset Preview -->
+                    <div id="data-preview" class="mt-5 d-none">
+                        <h5 class="mb-3"><i class="fas fa-eye"></i> Aperçu du Jeu de Données</h5>
+                        <div id="dataset-info" class="alert alert-info mb-4">
+                            <!-- Dataset description -->
+                        </div>
+                        <div id="preview-content" class="mb-4">
+                            <!-- Sample data/images -->
+                        </div>
+                        <button class="btn btn-success btn-lg" onclick="goToStep(2)">
+                            Suivant: Choisir un Modèle <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Select Model -->
+        <div class="step-section" id="step-2">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-success text-white">
+                    <h3 class="mb-0"><i class="fas fa-brain"></i> Étape 2: Choisissez Votre Modèle d'IA</h3>
+                </div>
+                <div class="card-body p-5">
+                    <p class="lead mb-4">Choisissez l'algorithme d'IA que vous souhaitez utiliser!</p>
+                    <div id="model-selection" class="row g-4">
+                        <!-- Models will be populated here -->
+                    </div>
+                    
+                    <!-- Hyperparameters Configuration -->
+                    <div id="hyperparameter-config" class="mt-5 d-none">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h5 class="mb-4"><i class="fas fa-sliders-h"></i> Configurer les Hyperparamètres</h5>
+                                <p class="text-muted mb-4">Ajustez finement comment votre modèle apprend! Survolez <i class="fas fa-info-circle text-info"></i> pour des explications.</p>
+                                <div id="hyperparameter-inputs" class="row g-3">
+                                    <!-- Hyperparameter inputs will be generated here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button class="btn btn-secondary me-2" onclick="goToStep(1)">
+                            <i class="fas fa-arrow-left"></i> Retour
+                        </button>
+                        <button class="btn btn-success btn-lg" id="train-button" onclick="trainModel()" disabled>
+                            Commencer l'Entraînement! <i class="fas fa-play"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Training -->
+        <div class="step-section" id="step-3">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-warning text-dark">
+                    <h3 class="mb-0"><i class="fas fa-cog fa-spin"></i> Étape 3: Entraînement de Votre Modèle</h3>
+                </div>
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                        <h4 class="mt-4">Votre IA est en train d'apprendre...</h4>
+                    </div>
+                    
+                    <!-- Training Steps Visualization -->
+                    <div id="training-steps" class="mt-4">
+                        <h5 class="mb-3"><i class="fas fa-tasks"></i> Processus d'Entraînement:</h5>
+                        <div id="training-steps-content" class="list-group">
+                            <!-- Training steps will appear here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Results -->
+        <div class="step-section" id="step-4">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-info text-white">
+                    <h3 class="mb-0"><i class="fas fa-chart-line"></i> Étape 4: Vos Résultats!</h3>
+                </div>
+                <div class="card-body p-5">
+                    <div id="results-content">
+                        <!-- Results will be shown here -->
+                    </div>
+                    
+                    <!-- Layer Visualization Button (for images) -->
+                    <div id="layer-viz-section" class="mt-4 d-none">
+                        <button class="btn btn-primary btn-lg" onclick="visualizeLayers()">
+                            <i class="fas fa-eye"></i> Voir Comment l'IA "Voit" Votre Image
+                        </button>
+                        <div id="layer-viz-content" class="mt-4"></div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button class="btn btn-primary btn-lg" onclick="startOver()">
+                            <i class="fas fa-redo"></i> Essayer un Autre Jeu de Données
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white text-center py-4 mt-5">
+        <div class="container">
+            <p class="mb-0">🤖 Laboratoire d'Apprentissage IA - Rendre l'Éducation IA Amusante et Accessible</p>
+            <p class="small text-muted">Créé avec Flask, TensorFlow et scikit-learn</p>
+        </div>
+    </footer>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay d-none">
+        <div class="spinner-border text-light" style="width: 4rem; height: 4rem;" role="status">
+            <span class="visually-hidden">Chargement...</span>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
